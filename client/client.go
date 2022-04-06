@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/lufeee/rat/grpcapi"
+
 	"google.golang.org/grpc"
 )
 
@@ -27,7 +28,7 @@ func main() {
 
 	cmd := new(grpcapi.Command)
 	cmd.In = os.Args[1]
-	cmd, err = client.RunCommand(context.Background, cmd)
+	cmd, err = client.RunCommand(context.Background(), cmd)
 	if err != nil {
 		log.Fatal(err)
 	}
